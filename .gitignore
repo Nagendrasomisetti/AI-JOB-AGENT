@@ -1,0 +1,6 @@
+jobs.db
+.env
+__pycache__/
+*.pyc
+*.xlsx
+debug_scrape.py
