@@ -93,10 +93,15 @@ When the database is newly initialized, the metrics are cleared and a helpful in
 
 ![Cold Startup / Empty State](images/dashboard_empty.png)
 
-### 2. Active Discovery & Algorithmic Scoring State
-Once the autonomous run completes, the dashboard populates real-time KPI metrics, showing total jobs, highly relevant matches, maximum compatibility scores, and platform splits. The interactive table provides colored match tags and clickable action buttons:
+### 2. Active Discovery & KPI Metrics Control Center
+Once the autonomous run completes, the dashboard populates real-time glassmorphic metric cards, displaying total persisted listings, highly matching opportunities (Score ≥ 50), maximum compatibility match score, and platform source splits:
 
-![Active Ingestion & Scoring State](images/dashboard_success.png)
+![Active Ingestion & KPI Metrics](images/dashboard_metrics.png)
+
+### 3. Ranked Career Grid with High-Suitability Highlights
+The scraped opportunities are presented in an interactive table sorted by compatibility score descending. Suitability rankings (e.g. MLOps/AI matches at **120**, **108**, **107**) are color-coded, skills are mapped, and links are formatted as clean action buttons:
+
+![Ranked Career Grid](images/dashboard_table.png)
 
 The dashboard shows:
 
