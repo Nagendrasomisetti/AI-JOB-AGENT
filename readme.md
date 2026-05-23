@@ -86,7 +86,17 @@ The system works like a pipeline:
 
 ## 🖥️ Dashboard
 
-(Add screenshots here)
+Here is the glassmorphic Streamlit Control Dashboard in action:
+
+### 1. Cold Startup / Initial Launch State
+When the database is newly initialized, the metrics are cleared and a helpful initialization indicator guides the user to define their search parameters:
+
+![Cold Startup / Empty State](images/dashboard_empty.png)
+
+### 2. Active Discovery & Algorithmic Scoring State
+Once the autonomous run completes, the dashboard populates real-time KPI metrics, showing total jobs, highly relevant matches, maximum compatibility scores, and platform splits. The interactive table provides colored match tags and clickable action buttons:
+
+![Active Ingestion & Scoring State](images/dashboard_success.png)
 
 The dashboard shows:
 

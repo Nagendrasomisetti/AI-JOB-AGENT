@@ -1,0 +1,9 @@
+streamlit
+pandas
+selenium
+webdriver-manager
+python-dotenv
+requests
+beautifulsoup4
+lxml
+openpyxl
