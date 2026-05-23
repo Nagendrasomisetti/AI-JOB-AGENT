@@ -110,6 +110,11 @@ The dashboard shows:
 * Search bar to filter jobs
 * Direct apply links
 
+### 🎥 Video Demonstration
+Watch the autonomous AI Job Agent execute a live run—interpreting natural language intent, compiling a multi-tool execution plan, crawling listings in headless Chrome, running hybrid keyword filters, scoring entries, and dynamically animating the glassmorphic dashboard control center:
+
+<video src="demo.mp4" width="100%" controls></video>
+
 ---
 
 ## ⚙️ Key Features
