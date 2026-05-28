@@ -12,7 +12,7 @@ class CutshortScraper(BaseCollector, BaseScraper):
     Scraper implementation for Cutshort.io.
     Inherits from both BaseCollector (API structure) and BaseScraper (Selenium configurations).
     """
-    def __init__(self, headless: bool = True):
+    def __init__(self, headless: bool = False):
         BaseCollector.__init__(self, name="Cutshort", source_type="Scraper")
         BaseScraper.__init__(self, headless=headless)
 
@@ -39,8 +39,9 @@ class CutshortScraper(BaseCollector, BaseScraper):
             logger.info(f"Navigating to Cutshort search page: {search_url}")
             self.driver.get(search_url)
             
-            # Let the dynamic Single Page App hydrate its state
-            time.sleep(6)
+            # Explicit wait synchronizer: Wait for React SPA cards to render
+            logger.info("Synchronizing: waiting for Cutshort dynamic cards to render...")
+            self.wait_for_element(By.CSS_SELECTOR, "div[class*='job-card'], div[class*='JobCard'], div.job-card", timeout=15)
             
             logger.info(f"Page loaded: '{self.driver.title}'")
 

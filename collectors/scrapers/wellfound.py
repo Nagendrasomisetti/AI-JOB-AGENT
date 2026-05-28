@@ -12,7 +12,7 @@ class WellfoundScraper(BaseCollector, BaseScraper):
     Scraper implementation for Wellfound.com (formerly AngelList).
     Inherits from both BaseCollector (API structure) and BaseScraper (Selenium configurations).
     """
-    def __init__(self, headless: bool = True):
+    def __init__(self, headless: bool = False):
         BaseCollector.__init__(self, name="Wellfound", source_type="Scraper")
         BaseScraper.__init__(self, headless=headless)
 
@@ -39,8 +39,9 @@ class WellfoundScraper(BaseCollector, BaseScraper):
             logger.info(f"Navigating to Wellfound search page: {search_url}")
             self.driver.get(search_url)
             
-            # Let the initial page state settle
-            time.sleep(6)
+            # Explicit wait synchronizer: Wait for Wellfound dynamic listing frames to hydrate
+            logger.info("Synchronizing: waiting for Wellfound dynamic listings to load...")
+            self.wait_for_element(By.CSS_SELECTOR, "div.job-listing, div[class*='job-listing'], div[class*='listing']", timeout=15)
 
             # Check if we got caught by Cloudflare protection
             page_source = self.driver.page_source.lower()
