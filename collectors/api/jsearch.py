@@ -142,6 +142,10 @@ class JSearchCollector(BaseCollector):
         # Multiply mock entries safely to match limit bounds
         for idx in range(limit):
             template = mock_templates[idx % len(mock_templates)]
+            # Clean and encode search terms to build an active, functional job discovery redirect
+            formatted_search = f"{template['title']} {template['company']} job".replace(" ", "+")
+            link = f"https://www.google.com/search?q={formatted_search}"
+            
             jobs.append({
                 "title": f"{template['title']} (Mock)",
                 "company": template["company"],
@@ -150,7 +154,7 @@ class JSearchCollector(BaseCollector):
                 "type": "Full-time",
                 "experience": "3+ years",
                 "skills": template["skills"],
-                "link": f"https://mock-jsearch.com/jobs/mock-id-{idx}-{query.replace(' ', '-')}",
+                "link": link,
                 "source": self.name,
                 "source_type": self.source_type
             })
