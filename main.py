@@ -1,11 +1,4 @@
 import logging
-from collectors.apis.arbeitnow_api import ArbeitnowCollector
-from collectors.apis.adzuna_api import AdzunaCollector
-from collectors.apis.jsearch_api import JSearchCollector
-from collectors.scrapers.internshala_scraper import InternshalaScraper
-from collectors.scrapers.wellfound_scraper import WellfoundScraper
-from collectors.scrapers.cutshort_scraper import CutshortScraper
-from collectors.scrapers.indeed_scraper import IndeedScraper
 
 from utils.filter import filter_ml_jobs
 from utils.deduplicate import remove_duplicates
@@ -35,6 +28,15 @@ def run_agent(query: str = "Find ML and AI jobs", limit_per_source: int = 10) ->
     Returns:
         list: A list of newly discovered, filtered, and scored jobs inserted in this run.
     """
+    # Dynamic imports to ensure Vercel can load main.py without importing Selenium/WebDriver
+    from collectors.apis.arbeitnow_api import ArbeitnowCollector
+    from collectors.apis.adzuna_api import AdzunaCollector
+    from collectors.apis.jsearch_api import JSearchCollector
+    from collectors.scrapers.internshala_scraper import InternshalaScraper
+    from collectors.scrapers.wellfound_scraper import WellfoundScraper
+    from collectors.scrapers.cutshort_scraper import CutshortScraper
+    from collectors.scrapers.indeed_scraper import IndeedScraper
+
     logger.info("=" * 60)
     logger.info(f"STARTING CENTRAL ETL INGESTION RUN FOR QUERY: '{query}'")
     logger.info("=" * 60)
@@ -129,7 +131,7 @@ if __name__ == "__main__":
 # ====================================================
 # WSGI Serverless Function Entrypoint for Vercel
 # ====================================================
-def app(environ, start_response):
+def handler(environ, start_response):
     """
     Standard WSGI entrypoint automatically recognized by Vercel's Python runtime.
     Serves the job aggregation listings in JSON format.
@@ -169,3 +171,8 @@ def app(environ, start_response):
 
     start_response(status, headers)
     return [response_body.encode('utf-8')]
+
+
+# Explicit top-level variable assignments strictly recognized by Vercel's builder
+app = handler
+application = handler
