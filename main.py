@@ -1,7 +1,11 @@
 import logging
-from agent.brain import AgentBrain
-from tools.internshala import InternshalaScraper
-from tools.wellfound import WellfoundScraper
+from collectors.api.arbeitnow import ArbeitnowCollector
+from collectors.api.adzuna import AdzunaCollector
+from collectors.api.jsearch import JSearchCollector
+from collectors.scrapers.internshala import InternshalaScraper
+from collectors.scrapers.wellfound import WellfoundScraper
+from collectors.scrapers.cutshort import CutshortScraper
+
 from utils.filter import filter_ml_jobs
 from utils.deduplicate import remove_duplicates
 from utils.scorer import score_job
@@ -18,57 +22,58 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
-def run_agent(query: str = "Find ML and AI jobs") -> list:
+def run_agent(query: str = "Find ML and AI jobs", limit_per_source: int = 10) -> list:
     """
-    Executes the entire end-to-end Autonomous Job Agent Pipeline.
+    Executes the entire end-to-end Job Aggregation Platform Ingestion Pipeline.
+    Triggered by CLI or the 24h Background Ingestion Scheduler.
     
     Args:
         query (str): The search query or job description intent.
+        limit_per_source (int): Maximum listings to pull per platform.
         
     Returns:
         list: A list of newly discovered, filtered, and scored jobs inserted in this run.
     """
     logger.info("=" * 60)
-    logger.info(f"STARTING AI JOB AGENT PIPELINE RUN FOR QUERY: '{query}'")
+    logger.info(f"STARTING CENTRAL ETL INGESTION RUN FOR QUERY: '{query}'")
     logger.info("=" * 60)
 
-    # 1. Initialize persistent storage & perform index sweeps
+    # 1. Initialize persistent storage & perform schema migration checks
     init_db()
     clean_incomplete_jobs()
 
-    # 2. Planning phase: Ask the agent to think
-    agent = AgentBrain()
-    results = []
+    # 2. Register active polymorphic collectors (REST APIs + Selenium Scrapers)
+    collectors = [
+        ArbeitnowCollector(),
+        AdzunaCollector(),
+        JSearchCollector(),
+        InternshalaScraper(headless=True),
+        WellfoundScraper(headless=True),
+        CutshortScraper(headless=True)
+    ]
 
-    try:
-        plan = agent.think(query)
-        # Execute the generated plan (limit to 10 listings per scraper for speed and safety)
-        results = agent.act(plan, max_jobs_per_source=10)
-    except Exception as plan_err:
-        logger.error(f"Agent planning or execution encountered an error: {plan_err}")
-        logger.info("Initiating structural fallback: Executing direct scraper crawlers...")
-        
-        # Safe Fallback: Direct crawl without Gemini planning
+    raw_results = []
+
+    # 3. Dynamic Aggregation Phase (Polymorphic iteration)
+    for collector in collectors:
         try:
-            internshala_scraper = InternshalaScraper(headless=True)
-            internshala_jobs = internshala_scraper.scrape_internships("machine learning", max_results=5)
-            
-            wellfound_scraper = WellfoundScraper(headless=True)
-            wellfound_jobs = wellfound_scraper.scrape_jobs("machine learning", max_results=5)
-            
-            results = internshala_jobs + wellfound_jobs
-        except Exception as fallback_err:
-            logger.critical(f"Direct scraper fallback also failed: {fallback_err}")
-            results = []
+            logger.info(f"Triggering Collector: '{collector.name}' ({collector.source_type})...")
+            platform_jobs = collector.collect(query, limit=limit_per_source)
+            raw_results.extend(platform_jobs)
+            logger.info(f"Collector '{collector.name}' successfully yielded {len(platform_jobs)} listings.")
+        except Exception as col_err:
+            logger.error(f"Collector '{collector.name}' encountered a isolated failure: {col_err}")
+            # Continue executing other collectors safely
+            continue
 
-    if not results:
-        logger.warning("Pipeline collected 0 raw jobs. Terminating pipeline execution early.")
+    if not raw_results:
+        logger.warning("Pipeline collected 0 raw jobs from all combined sources. Ingestion terminated early.")
         return []
 
-    # 3. Clean raw output: Discard obvious corrupt elements
-    logger.info(f"Processing scraped outputs. Raw count: {len(results)}")
+    # 4. Clean raw output: Discard obvious corrupt elements
+    logger.info(f"Processing scraped outputs. Raw count: {len(raw_results)}")
     valid_results = []
-    for job in results:
+    for job in raw_results:
         title = (job.get("title") or "").strip()
         link = (job.get("link") or "").strip()
         company = (job.get("company") or "").strip()
@@ -77,16 +82,16 @@ def run_agent(query: str = "Find ML and AI jobs") -> list:
             continue
         valid_results.append(job)
 
-    logger.info(f"Integrity sweep: kept {len(valid_results)}/{len(results)} fully formed listings.")
+    logger.info(f"Integrity sweep: kept {len(valid_results)}/{len(raw_results)} fully formed listings.")
     results = valid_results
 
-    # 4. Filter Layer: Fast keyword pre-filtering + AI evaluation
+    # 5. Filter Layer: Fast keyword pre-filtering + AI evaluation
     results = filter_ml_jobs(results)
 
-    # 5. Deduplicate Layer: In-memory duplicate removal
+    # 6. Deduplicate Layer: In-memory duplicate removal
     results = remove_duplicates(results)
 
-    # 6. Scoring Layer: Apply suitability algorithm
+    # 7. Scoring Layer: Apply suitability algorithm
     logger.info("Computing algorithmic scores and ranking opportunities...")
     for job in results:
         job["score"] = score_job(job)
@@ -94,16 +99,16 @@ def run_agent(query: str = "Find ML and AI jobs") -> list:
     # Sort listings descending by score (highest scores first)
     results = sorted(results, key=lambda x: x.get("score", 0.0), reverse=True)
 
-    # 7. Database Persistence: Returns ONLY brand new jobs that do not already exist in DB
+    # 8. Database Persistence: Returns ONLY brand new jobs that do not already exist in DB
     new_jobs = save_jobs_to_db(results)
 
-    # 8. Report Export Layer: Save newly discovered listings to structured styled Excel
+    # 9. Report Export Layer: Save newly discovered listings to structured styled Excel
     if new_jobs:
         save_jobs_to_excel(new_jobs)
     else:
         logger.info("No new listings found in this run; skipping Excel spreadsheet export.")
 
-    logger.info(f"PIPELINE RUN COMPLETE. New jobs discovered and saved: {len(new_jobs)}")
+    logger.info(f"CENTRAL ETL INGESTION RUN COMPLETE. New jobs discovered and saved: {len(new_jobs)}")
     logger.info("=" * 60)
     
     return new_jobs
@@ -116,5 +121,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         search_term = " ".join(sys.argv[1:])
         
-    jobs = run_agent(search_term)
+    jobs = run_agent(search_term, limit_per_source=5)
     print(f"\n[CLI Summary] New jobs added: {len(jobs)}")
