@@ -47,9 +47,9 @@ def run_agent(query: str = "Find ML and AI jobs", limit_per_source: int = 10) ->
         ArbeitnowCollector(),
         AdzunaCollector(),
         JSearchCollector(),
-        InternshalaScraper(headless=True),
-        WellfoundScraper(headless=True),
-        CutshortScraper(headless=True)
+        InternshalaScraper(headless=True), # Internshala does not use anti-bot shields and works in headless mode
+        WellfoundScraper(headless=False), # Wellfound requires headful mode to pass Cloudflare screens
+        CutshortScraper(headless=False)   # Cutshort requires headful mode to load dynamic SPAs cleanly
     ]
 
     raw_results = []
