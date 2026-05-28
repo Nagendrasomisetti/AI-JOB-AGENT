@@ -236,7 +236,8 @@ st.sidebar.info(
     "**Web-based Scrapers:**\n"
     "- Internshala (Selenium)\n"
     "- Wellfound (Selenium)\n"
-    "- Cutshort (Selenium)"
+    "- Cutshort (Selenium)\n"
+    "- Indeed (Selenium)"
 )
 
 # ----------------------------------------------------

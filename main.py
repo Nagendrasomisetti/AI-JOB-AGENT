@@ -5,6 +5,7 @@ from collectors.apis.jsearch_api import JSearchCollector
 from collectors.scrapers.internshala_scraper import InternshalaScraper
 from collectors.scrapers.wellfound_scraper import WellfoundScraper
 from collectors.scrapers.cutshort_scraper import CutshortScraper
+from collectors.scrapers.indeed_scraper import IndeedScraper
 
 from utils.filter import filter_ml_jobs
 from utils.deduplicate import remove_duplicates
@@ -42,14 +43,14 @@ def run_agent(query: str = "Find ML and AI jobs", limit_per_source: int = 10) ->
     init_db()
     clean_incomplete_jobs()
 
-    # 2. Register active polymorphic collectors (REST APIs + Selenium Scrapers)
     collectors = [
         ArbeitnowCollector(),
         AdzunaCollector(),
         JSearchCollector(),
         InternshalaScraper(headless=True), # Internshala does not use anti-bot shields and works in headless mode
         WellfoundScraper(headless=False), # Wellfound requires headful mode to pass Cloudflare screens
-        CutshortScraper(headless=False)   # Cutshort requires headful mode to load dynamic SPAs cleanly
+        CutshortScraper(headless=False),   # Cutshort requires headful mode to load dynamic SPAs cleanly
+        IndeedScraper(headless=False)      # Indeed requires headful mode to pass security screens
     ]
 
     raw_results = []
