@@ -103,7 +103,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("=" * 60)
-    print("🤖 AI JOB AGENT - INGESTION DAEMON SERVER")
+    print("[AGENT] AI JOB AGENT - INGESTION DAEMON SERVER")
     print("=" * 60)
     
     scheduler = IngestionScheduler(interval_seconds=args.interval, query=args.query)
