@@ -124,3 +124,48 @@ if __name__ == "__main__":
         
     jobs = run_agent(search_term, limit_per_source=5)
     print(f"\n[CLI Summary] New jobs added: {len(jobs)}")
+
+
+# ====================================================
+# WSGI Serverless Function Entrypoint for Vercel
+# ====================================================
+def app(environ, start_response):
+    """
+    Standard WSGI entrypoint automatically recognized by Vercel's Python runtime.
+    Serves the job aggregation listings in JSON format.
+    """
+    import json
+    from utils.database import get_all_jobs, init_db
+
+    # Initialize the database schema and add columns if they don't exist
+    init_db()
+
+    status = '200 OK'
+    headers = [
+        ('Content-type', 'application/json'),
+        ('Access-Control-Allow-Origin', '*'),
+        ('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'),
+        ('Access-Control-Allow-Headers', 'Content-Type')
+    ]
+    
+    # Handle preflight options request
+    if environ.get('REQUEST_METHOD') == 'OPTIONS':
+        start_response('204 No Content', headers)
+        return [b'']
+
+    try:
+        jobs = get_all_jobs()
+        response_body = json.dumps({
+            "status": "success",
+            "count": len(jobs),
+            "jobs": jobs
+        }, default=str)
+    except Exception as e:
+        status = '500 Internal Server Error'
+        response_body = json.dumps({
+            "status": "error",
+            "message": str(e)
+        })
+
+    start_response(status, headers)
+    return [response_body.encode('utf-8')]
