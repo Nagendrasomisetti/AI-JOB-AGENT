@@ -19,7 +19,12 @@ def get_connection() -> sqlite3.Connection:
     Creates and returns a thread-safe SQLite connection.
     Configured with a longer busy timeout to handle concurrent dashboard reads and daemon writes.
     """
-    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    if os.getenv("VERCEL"):
+        # Vercel operates on a read-only filesystem; open SQLite in strict read-only mode using URI
+        logger.info("Connecting to SQLite database in read-only mode on Vercel.")
+        conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=30.0)
+    else:
+        conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -30,6 +35,10 @@ def init_db() -> None:
     This creates the table structure, ensuring link uniqueness to prevent duplicates.
     Includes automated, non-destructive migration checks for pre-existing legacy schemas.
     """
+    if os.getenv("VERCEL"):
+        logger.info("Running on Vercel: skipping database initialization write queries to prevent read-only filesystem errors.")
+        return
+
     logger.info("Initializing database schema...")
     try:
         with get_connection() as conn:
