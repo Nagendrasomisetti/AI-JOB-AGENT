@@ -1,10 +1,10 @@
 import logging
-from collectors.api.arbeitnow import ArbeitnowCollector
-from collectors.api.adzuna import AdzunaCollector
-from collectors.api.jsearch import JSearchCollector
-from collectors.scrapers.internshala import InternshalaScraper
-from collectors.scrapers.wellfound import WellfoundScraper
-from collectors.scrapers.cutshort import CutshortScraper
+from collectors.apis.arbeitnow_api import ArbeitnowCollector
+from collectors.apis.adzuna_api import AdzunaCollector
+from collectors.apis.jsearch_api import JSearchCollector
+from collectors.scrapers.internshala_scraper import InternshalaScraper
+from collectors.scrapers.wellfound_scraper import WellfoundScraper
+from collectors.scrapers.cutshort_scraper import CutshortScraper
 
 from utils.filter import filter_ml_jobs
 from utils.deduplicate import remove_duplicates
